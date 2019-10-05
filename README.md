@@ -1,2 +1,2 @@
 # ArduinoLEDClock
-Clock using LED and Arduino
+Hexagon cell based Digital Clock using LED and Arduino
