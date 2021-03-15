@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
-#include "RTClib.h"
+#include <RTClib.h>
 
 /*
  * Constants
@@ -47,44 +47,44 @@ bool h12=false;              //시간 표시 형식의 flag 값. true 일 시 12
 const bool LedNumbers[10][13] = {
         //0
         {true,true,true,true,
-        true,false,false,false,true,
-        true,true,true,true},
+                true,false,false,false,true,
+                true,true,true,true},
         //1
         {false, false, false, false,
-        true, true, true, true, true,
-        false,false,false,false},
+                true, true, true, true, true,
+                false,false,false,false},
         //2
         {true, false, true, true,
-        true, false, true, false, true,
-        true,true,false,true},
+                true, false, true, false, true,
+                true,true,false,true},
         //3
         {true, false, false, true,
-        true, false, true, false, true,
-        true,true,true,true},
+                true, false, true, false, true,
+                true,true,true,true},
         //4
         {true, true, false, false,
-        false, false, true, false, false,
-        true,true,true,true},
+                false, false, true, false, false,
+                true,true,true,true},
         //5
         {true, true, false, true,
-        true, false, true, false, true,
-        true,false,true,true},
+                true, false, true, false, true,
+                true,false,true,true},
         //6
         {true, true, true, true,
-        true, false, true, false, true,
-        true,false,true,true},
+                true, false, true, false, true,
+                true,false,true,true},
         //7
         {true, true, false, false,
-        false, false, false, false, true,
-        true,true,true,true},
+                false, false, false, false, true,
+                true,true,true,true},
         //8
         {true, true, true, true,
-        true, false, true, false, true,
-        true,true,true,true},
+                true, false, true, false, true,
+                true,true,true,true},
         //9
         {true, true, false, false,
-        false, false, true, false, true,
-        true,true,true,true}
+                false, false, true, false, true,
+                true,true,true,true}
 };
 
 /**?
@@ -118,9 +118,12 @@ void setup()
 
 void loop()
 {
-    uint8_t c = strip.Color(255, 255, 255);
+//    uint8_t c = strip.Color(255, 255, 255);
 //    showClock(c, c, c, c);
-    _testSingleCell(ledData[0], c)
+    uint8_t randomColor = strip.Color(random(0, 256), random(0, 256), random(0, 256));
+    _debugRTCTime();
+//    _testSingleCell(ledData[0], c)
+    delay(500);
 }
 
 /*
@@ -142,6 +145,56 @@ void showClock(uint8_t colorH1, uint8_t colorH2, uint8_t colorM1, uint8_t colorM
 {
     DateTime now = rtc.now(); //Retrieve current time from RTC.
 
+    byte h1 = now.hour() / 10;
+    byte h2 = now.hour() % 10;
+    byte m1 = now.minute() / 10;
+    byte m2 = now.minute() % 10;
+
+    _changeSingleCellStatus(LedNumbers[h1], HOUR1_POS, colorH1);  // 시간 첫째 자리
+    _changeSingleCellStatus(LedNumbers[h2], HOUR2_POS, colorH2);  // 시간 둘째 자리
+    _changeSingleCellStatus(LedNumbers[m1], MIN1_POS, colorM1);  // 분 첫째 자리
+    _changeSingleCellStatus(LedNumbers[m2], MIN2_POS, colorM2);  // 분 둘째 자리
+}
+
+/**?
+ * test first cell to debug.
+ * @param ledData : array of boolean values which indicates a guideline to turn on led in a single cell to show number.
+ * @param color : RGB color value to change cell color.
+ */
+void _testSingleCell(const bool ledData[], uint8_t color)
+{
+    _changeSingleCellStatus(ledData, HOUR1_POS, color);
+}
+
+/**?
+ * change single cell's color.
+ * @param ledData : array of boolean values which indicates a guideline to turn on led in a single cell to show number.
+ * @param pos : start position on target cell. required for applying this function on every cells.
+ * @param color : RGB color value to change cell color.
+ */
+void _changeSingleCellStatus(const bool ledData[], byte pos, uint8_t color)
+{
+    for (int i=0; i < CELL_SIZE; i ++)
+    {
+        if (ledData[i])
+        {
+            strip.setPixelColor(2*i+pos, color);
+            strip.setPixelColor(2*i+pos+1, color);
+            strip.show();
+        }
+    }
+}
+
+void setColonColor(uint8_t colon1, uint8_t colon2)
+{
+strip.setPixelColor(COLON1_POS, colon1);
+strip.setPixelColor(COLON2_POS, colon2);
+}
+
+void _debugRTCTime()
+{
+    DateTime now = rtc.now(); //Retrieve current time from RTC.
+
     //DEBUG
     Serial.println("Current Date & Time: "); //현재 날짜와 시간
     Serial.print(now.year(), DEC); //년
@@ -158,47 +211,4 @@ void showClock(uint8_t colorH1, uint8_t colorH2, uint8_t colorM1, uint8_t colorM
     Serial.println();
     Serial.print(rtc.getTemperature()); //온도 표시도 가능합니다.
     Serial.println('C');
-
-    byte h1, h2 = now.hour() / 10, now.hour() % 10;
-    byte m1, m2 = now.minute() / 10, now.minute() % 10;
-
-    _changeSingleCellStatus(LedNumbers[h1], HOUR1_POS, colorH1);  // 시간 첫째 자리
-    _changeSingleCellStatus(LedNumbers[h2], HOUR2_POS, colorH2);  // 시간 둘째 자리
-    _changeSingleCellStatus(LedNumbers[m1], MIN1_POS, colorM1);  // 분 첫째 자리
-    _changeSingleCellStatus(LedNumbers[m2], MIN2_POS, colorM2);  // 분 둘째 자리
-}
-
-/**?
- * test first cell to debug.
- * @param ledData : array of boolean values which indicates a guideline to turn on led in a single cell to show number.
- * @param color : RGB color value to change cell color.
- */
-void _testSingleCell(bool[] ledData, uint8_t color)
-{
-    _changeSingleCellStatus(ledData, HOUR1_POS, color);
-}
-
-/**?
- * change single cell's color.
- * @param ledData : array of boolean values which indicates a guideline to turn on led in a single cell to show number.
- * @param pos : start position on target cell. required for applying this function on every cells.
- * @param color : RGB color value to change cell color.
- */
-void _changeSingleCellStatus(bool[] ledData, byte pos, uint8_t color)
-{
-    for (int i=0; i < CELL_SIZE; i ++)
-    {
-        if (ledData[i])
-        {
-            strip.setPixelColor(2*i+pos, color);
-            strip.setPixelColor(2*i+pos+1, color);
-            strip.show();
-        }
-    }
-}
-
-void setColonColor(uint8_t colon1. uint8_t colon2)
-{
-    strip.setPixelColor(COLON1_POS, colon1);
-    strip.setPixelColor(COLON2_POS, colon2);
 }
